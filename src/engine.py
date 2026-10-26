@@ -53,6 +53,14 @@ class Value:
     def __rmul__(self, other: Value | int | float) -> Value:
         return self * other
 
+    def __pow__(self, other: int | float) -> Value:
+        if isinstance(other, (int, float)):
+            return Value(self._data ** other)
+
+        raise ValueError(
+            "Expected `other` to be of type "
+            f"`int`, or `float`, but got {type(other).__name__}")
+
     def __neg__(self) -> Value:
         return Value(self.data) * -1
 

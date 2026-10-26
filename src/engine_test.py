@@ -90,6 +90,35 @@ class ValueTest(parameterized.TestCase):
         ):
             _ = left * right
 
+    @parameterized.named_parameters(
+        ("int", Value(2.0), 3, 8.0),
+        ("float", Value(2.0), 3.0, 8.0),
+    )
+    def test_pow_success(
+        self,
+        base: Value,
+        power: int | float,
+        expected: float,
+    ) -> None:
+        """Tests that raising `Value`s to a power works."""
+        result = base ** power
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result.data, expected)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("value_and_string", Value(1.0), "a"),
+        ("value_and_value", Value(1.0), Value(2.0))
+    )
+    def test_pow_failure(
+        self, left: Value | int | float, right: Value | int | float
+    ) -> None:
+        """Tests that raising `Value` anything but ints and floats raises an error."""
+        with self.assertRaisesRegex(
+            ValueError,
+            r"Expected `other` to be of type `int`, or `float`",
+        ):
+            _ = left ** right  # type: ignore[operator, call-overload]  # pyright: ignore[reportOperatorIssue]
+
     def test_neg_success(self) -> None:
         """Tests that negating `Value`s works."""
         v = Value(1.0)
