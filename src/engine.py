@@ -49,3 +49,6 @@ class Value:
         raise ValueError(
             "Expected `other` to be of type `Value`, "
             f"`int`, or, `float`, but got {type(other).__name__}")
+
+    def __rmul__(self, other: Value | int | float):
+        return self * other
