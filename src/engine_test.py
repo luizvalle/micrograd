@@ -52,7 +52,7 @@ class ValueTest(parameterized.TestCase):
     def test_add_failure(
         self, left: Value | int | float, right: Value | int | float
     ) -> None:
-        """Tests that adding `Value`s and scalars works."""
+        """Tests that adding `Value`s and other objects raises and error."""
         with self.assertRaisesRegex(
             ValueError,
             r"Expected `other` to be of type `Value`, `int`, or, `float`",
@@ -72,7 +72,7 @@ class ValueTest(parameterized.TestCase):
         right: Value | int | float,
         expected: float,
     ) -> None:
-        """Tests that adding `Value`s and scalars works."""
+        """Tests that multiplying `Value`s and scalars works."""
         result = left * right
         self.assertIsInstance(result, Value)
         self.assertAlmostEqual(result.data, expected)  # type: ignore
@@ -83,12 +83,178 @@ class ValueTest(parameterized.TestCase):
     def test_mul_failure(
         self, left: Value | int | float, right: Value | int | float
     ) -> None:
-        """Tests that adding `Value`s and scalars works."""
+        """Tests that multiplying `Value`s and other types raises an error."""
         with self.assertRaisesRegex(
             ValueError,
             r"Expected `other` to be of type `Value`, `int`, or, `float`",
         ):
             _ = left * right
+
+    def test_neg_success(self) -> None:
+        """Tests that negating `Value`s works."""
+        v = Value(1.0)
+        neg_v = -v
+        self.assertIsInstance(neg_v, Value)
+        self.assertAlmostEqual(neg_v.data, -v.data)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("all_values_true", Value(1.0), Value(1.0), True),
+        ("all_values_false", Value(1.0), Value(2.0), False),
+        ("value_and_int_true", Value(1.0), 1, True),
+        ("value_and_int_false", Value(1.0), 2.0, False),
+        ("int_and_value_true", 1, Value(1.0), True),
+        ("int_and_value_false", 1, Value(2.0), False),
+        ("value_and_float_true", Value(1.0), 1.0, True),
+        ("value_and_float_false", Value(1.0), 2.0, False),
+        ("float_and_value_true", 1.0, Value(1.0), True),
+        ("float_and_value_false", 1.0, Value(2.0), False),
+    )
+    def test_eq_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: bool,
+    ) -> None:
+        """Tests that comparing equality of `Value`s and scalars works."""
+        result = left == right
+        self.assertIsInstance(result, bool)
+        self.assertEqual(result, expected)  # type: ignore
+
+
+    @parameterized.named_parameters(
+        ("all_values_true", Value(1.0), Value(2.0), True),
+        ("all_values_false", Value(1.0), Value(1.0), False),
+        ("value_and_int_true", Value(1.0), 2, True),
+        ("value_and_int_false", Value(1.0), 1, False),
+        ("int_and_value_true", 1, Value(2.0), True),
+        ("int_and_value_false", 1, Value(1.0), False),
+        ("value_and_float_true", Value(1.0), 2.0, True),
+        ("value_and_float_false", Value(1.0), 1.0, False),
+        ("float_and_value_true", 1.0, Value(2.0), True),
+        ("float_and_value_false", 1.0, Value(1.0), False),
+    )
+    def test_ne_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: bool,
+    ) -> None:
+        """Tests that comparing inequality of `Value`s and scalars works."""
+        result = left != right
+        self.assertIsInstance(result, bool)
+        self.assertEqual(result, expected)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("all_values_less", Value(1.0), Value(2.0), True),
+        ("all_values_equal", Value(1.0), Value(1.0), False),
+        ("all_values_greater", Value(2.0), Value(1.0), False),
+        ("value_and_int_less", Value(1.0), 2, True),
+        ("value_and_int_equal", Value(1.0), 1, False),
+        ("value_and_int_greater", Value(2.0), 1, False),
+        ("int_and_value_less", 1, Value(2.0), True),
+        ("int_and_value_equal", 1, Value(1.0), False),
+        ("int_and_value_greater", 2, Value(1.0), False),
+        ("value_and_float_less", Value(1.0), 2.0, True),
+        ("value_and_float_equal", Value(1.0), 1.0, False),
+        ("value_and_float_greater", Value(2.0), 1.0, False),
+        ("float_and_value_less", 1.0, Value(2.0), True),
+        ("float_and_value_equal", 1.0, Value(1.0), False),
+        ("float_and_value_greater", 2.0, Value(1.0), False),
+    )
+    def test_lt_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: bool,
+    ) -> None:
+        """Tests that less-than comparisons of `Value`s and scalars work."""
+        result = left < right
+        self.assertIsInstance(result, bool)
+        self.assertEqual(result, expected)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("all_values_less", Value(1.0), Value(2.0), True),
+        ("all_values_equal", Value(1.0), Value(1.0), True),
+        ("all_values_greater", Value(2.0), Value(1.0), False),
+        ("value_and_int_less", Value(1.0), 2, True),
+        ("value_and_int_equal", Value(1.0), 1, True),
+        ("value_and_int_greater", Value(2.0), 1, False),
+        ("int_and_value_less", 1, Value(2.0), True),
+        ("int_and_value_equal", 1, Value(1.0), True),
+        ("int_and_value_greater", 2, Value(1.0), False),
+        ("value_and_float_less", Value(1.0), 2.0, True),
+        ("value_and_float_equal", Value(1.0), 1.0, True),
+        ("value_and_float_greater", Value(2.0), 1.0, False),
+        ("float_and_value_less", 1.0, Value(2.0), True),
+        ("float_and_value_equal", 1.0, Value(1.0), True),
+        ("float_and_value_greater", 2.0, Value(1.0), False),
+    )
+    def test_le_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: bool,
+    ) -> None:
+        """Tests that less-than-or-equal comparisons of `Value`s and scalars work."""
+        result = left <= right
+        self.assertIsInstance(result, bool)
+        self.assertEqual(result, expected)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("all_values_less", Value(1.0), Value(2.0), False),
+        ("all_values_equal", Value(1.0), Value(1.0), False),
+        ("all_values_greater", Value(2.0), Value(1.0), True),
+        ("value_and_int_less", Value(1.0), 2, False),
+        ("value_and_int_equal", Value(1.0), 1, False),
+        ("value_and_int_greater", Value(2.0), 1, True),
+        ("int_and_value_less", 1, Value(2.0), False),
+        ("int_and_value_equal", 1, Value(1.0), False),
+        ("int_and_value_greater", 2, Value(1.0), True),
+        ("value_and_float_less", Value(1.0), 2.0, False),
+        ("value_and_float_equal", Value(1.0), 1.0, False),
+        ("value_and_float_greater", Value(2.0), 1.0, True),
+        ("float_and_value_less", 1.0, Value(2.0), False),
+        ("float_and_value_equal", 1.0, Value(1.0), False),
+        ("float_and_value_greater", 2.0, Value(1.0), True),
+    )
+    def test_gt_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: bool,
+    ) -> None:
+        """Tests that greater-than comparisons of `Value`s and scalars work."""
+        result = left > right
+        self.assertIsInstance(result, bool)
+        self.assertEqual(result, expected)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("all_values_less", Value(1.0), Value(2.0), False),
+        ("all_values_equal", Value(1.0), Value(1.0), True),
+        ("all_values_greater", Value(2.0), Value(1.0), True),
+        ("value_and_int_less", Value(1.0), 2, False),
+        ("value_and_int_equal", Value(1.0), 1, True),
+        ("value_and_int_greater", Value(2.0), 1, True),
+        ("int_and_value_less", 1, Value(2.0), False),
+        ("int_and_value_equal", 1, Value(1.0), True),
+        ("int_and_value_greater", 2, Value(1.0), True),
+        ("value_and_float_less", Value(1.0), 2.0, False),
+        ("value_and_float_equal", Value(1.0), 1.0, True),
+        ("value_and_float_greater", Value(2.0), 1.0, True),
+        ("float_and_value_less", 1.0, Value(2.0), False),
+        ("float_and_value_equal", 1.0, Value(1.0), True),
+        ("float_and_value_greater", 2.0, Value(1.0), True),
+    )
+    def test_ge_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: bool,
+    ) -> None:
+        """Tests that greater-than-or-equal comparisons of `Value`s and scalars work."""
+        result = left >= right
+        self.assertIsInstance(result, bool)
+        self.assertEqual(result, expected)  # type: ignore
 
 
 if __name__ == "__main__":

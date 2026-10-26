@@ -50,5 +50,47 @@ class Value:
             "Expected `other` to be of type `Value`, "
             f"`int`, or, `float`, but got {type(other).__name__}")
 
-    def __rmul__(self, other: Value | int | float):
+    def __rmul__(self, other: Value | int | float) -> Value:
         return self * other
+
+    def __neg__(self) -> Value:
+        return Value(self.data) * -1
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Value):
+            return self.data == other.data
+
+        if isinstance(other, (int, float)):
+            return self.data == other
+
+        raise ValueError(
+            "Expected `other` to be of type `Value`, "
+            f"`int`, or, `float`, but got {type(other).__name__}")
+
+    def __lt__(self, other):
+        if isinstance(other, Value):
+            return self.data < other.data
+
+        if isinstance(other, (int, float)):
+            return self.data < other
+
+        raise ValueError(
+            "Expected `other` to be of type `Value`, "
+            f"`int`, or, `float`, but got {type(other).__name__}")
+
+    def __le__(self, other):
+        return (self == other) or (self < other)
+
+    def __gt__(self, other):
+        if isinstance(other, Value):
+            return self.data > other.data
+
+        if isinstance(other, (int, float)):
+            return self.data > other
+
+        raise ValueError(
+            "Expected `other` to be of type `Value`, "
+            f"`int`, or, `float`, but got {type(other).__name__}")
+
+    def __ge__(self, other):
+        return (self == other) or (self > other)
