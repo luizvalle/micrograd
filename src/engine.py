@@ -49,14 +49,3 @@ class Value:
         raise ValueError(
             "Expected `other` to be of type `Value`, "
             f"`int`, or, `float`, but got {type(other).__name__}")
-
-
-
-if __name__ == "__main__":
-    a = Value(1.0)
-    b = Value(2.0)
-
-    print(f"{a + b=}")
-    print(f"{a + 3}")
-    print(f"{3 + a}")
-    print(f"")
