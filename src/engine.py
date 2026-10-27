@@ -10,9 +10,10 @@ class Value:
 
     Attributes:
         data: The scalar value held by this object.
+        label: The label used to identify this object.
     """
 
-    def __init__(self, value: Value | int | float) -> None:
+    def __init__(self, value: Value | int | float, label: str = "") -> None:
         if isinstance(value, bool) or not isinstance(
             value, (Value, int, float)
         ):
@@ -23,11 +24,17 @@ class Value:
         self._data: float = (
             value.data if isinstance(value, Value) else float(value)
         )
+        self._label = label
 
     @property
     def data(self) -> float:
         """Returns the data held by this instance."""
         return self._data
+
+    @property
+    def label(self) -> str:
+        """Returns the label."""
+        return self._label
 
     def __repr__(self) -> str:
         return f"Value({self.data})"
