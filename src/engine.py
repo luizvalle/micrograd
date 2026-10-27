@@ -11,9 +11,10 @@ class Value:
     Attributes:
         data: The scalar value held by this object.
         label: The label used to identify this object.
+        op: The operation that generated this data.
     """
 
-    def __init__(self, value: Value | int | float, label: str = "") -> None:
+    def __init__(self, value: Value | int | float, *, label: str = "", op: str = "") -> None:
         if isinstance(value, bool) or not isinstance(
             value, (Value, int, float)
         ):
@@ -25,6 +26,7 @@ class Value:
             value.data if isinstance(value, Value) else float(value)
         )
         self._label = label
+        self._op = op
 
     @property
     def data(self) -> float:
@@ -35,6 +37,11 @@ class Value:
     def label(self) -> str:
         """Returns the label."""
         return self._label
+
+    @property
+    def op(self) -> str:
+        """Returns the operation that generated this value."""
+        return self._op
 
     def __repr__(self) -> str:
         return f"Value({self.data})"

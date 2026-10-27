@@ -27,10 +27,15 @@ class ValueTest(parameterized.TestCase):
 
     def test_initialization_with_label(self) -> None:
         """Tests initialization with the optional label."""
-        a = Value(0.0, "a")
-        b = Value(1.0, "b")
+        a = Value(0.0, label="a")
+        b = Value(1.0, label="b")
         self.assertEqual(a.label, "a")
         self.assertEqual(b.label, "b")
+
+    def test_initialization_with_op(self) -> None:
+        """Tests initialization with the optional operation."""
+        a = Value(0.0, op="+")
+        self.assertEqual(a.op, "+")
 
     @parameterized.named_parameters(("string", "1"), ("boolean", False))
     def test_initialization_invalid_data_failure(self, data) -> None:
