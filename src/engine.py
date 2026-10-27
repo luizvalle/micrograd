@@ -1,5 +1,7 @@
 """Implementation of the Value class"""
 
+import math
+
 from __future__ import annotations
 
 
@@ -73,7 +75,7 @@ class Value:
     def __sub__(self, other: Value | int | float) -> Value:
         return self + (-other)
 
-    def __rsub__(self, other):
+    def __rsub__(self, other: Value | int | float) -> Value:
         return other + (-self)
 
     def __eq__(self, other) -> bool:
