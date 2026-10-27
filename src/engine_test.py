@@ -119,6 +119,38 @@ class ValueTest(parameterized.TestCase):
         ):
             _ = left ** right  # type: ignore[operator, call-overload]  # pyright: ignore[reportOperatorIssue]
 
+    @parameterized.named_parameters(
+        ("value", Value(6.0), Value(2.0), 3.0),
+        ("int", Value(6.0), 2, 3.0),
+        ("float", Value(6.0), 2.0, 3.0),
+    )
+    def test_truediv_success(
+        self,
+        left: Value,
+        right: Value | int | float,
+        expected: float,
+    ) -> None:
+        """Tests that dividing `Value`s by `Value`s and scalars works."""
+        result = left / right
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result.data, expected)  # type: ignore
+
+    @parameterized.named_parameters(
+        ("value", Value(6.0), Value(2.0), 3.0),
+        ("int", 6, Value(2.0), 3.0),
+        ("float", 6.0, Value(2.0), 3.0),
+    )
+    def test_rtruediv_success(
+        self,
+        left: Value | int | float,
+        right: Value,
+        expected: float,
+    ) -> None:
+        """Tests reflected division of `Value`s and scalars by a `Value`."""
+        result = left / right
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result.data, expected)  # type: ignore
+
     def test_neg_success(self) -> None:
         """Tests that negating `Value`s works."""
         v = Value(1.0)

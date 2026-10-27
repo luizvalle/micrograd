@@ -61,6 +61,12 @@ class Value:
             "Expected `other` to be of type "
             f"`int`, or `float`, but got {type(other).__name__}")
 
+    def __truediv__(self, other: Value | int | float) -> Value:
+        return self * (other ** -1)
+
+    def __rtruediv__(self, other: Value | int | float) -> Value:
+        return other * (self ** -1)
+
     def __neg__(self) -> Value:
         return Value(self.data) * -1
 
