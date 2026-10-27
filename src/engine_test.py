@@ -120,6 +120,24 @@ class ValueTest(parameterized.TestCase):
             _ = left ** right  # type: ignore[operator, call-overload]  # pyright: ignore[reportOperatorIssue]
 
     @parameterized.named_parameters(
+        ("all_values", Value(1.0), Value(2.0), -1.0),
+        ("value_and_int", Value(1.0), 2, -1.0),
+        ("int_and_value", 1, Value(2.0), -1.0),
+        ("value_and_float", Value(1.0), 2.0, -1.0),
+        ("float_and_value", 1.0, Value(2.0), -1.0),
+    )
+    def test_sub_success(
+        self,
+        left: Value | int | float,
+        right: Value | int | float,
+        expected: float,
+    ) -> None:
+        """Tests that adding `Value`s and scalars works."""
+        result = left - right
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result.data, expected)  # type: ignore   
+
+    @parameterized.named_parameters(
         ("value", Value(6.0), Value(2.0), 3.0),
         ("int", Value(6.0), 2, 3.0),
         ("float", Value(6.0), 2.0, 3.0),

@@ -70,6 +70,12 @@ class Value:
     def __neg__(self) -> Value:
         return Value(self.data) * -1
 
+    def __sub__(self, other: Value | int | float) -> Value:
+        return self + (-other)
+
+    def __rsub__(self, other):
+        return other + (-self)
+
     def __eq__(self, other) -> bool:
         if isinstance(other, Value):
             return self.data == other.data
