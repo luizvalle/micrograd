@@ -1,9 +1,8 @@
 """Implementation of the Value class"""
 
-import math
-
 from __future__ import annotations
 
+import math
 
 
 class Value:
@@ -77,6 +76,10 @@ class Value:
 
     def __rsub__(self, other: Value | int | float) -> Value:
         return other + (-self)
+
+    def exp(self) -> Value:
+        """Raises `e` to this value."""
+        return Value(math.exp(self.data))
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Value):

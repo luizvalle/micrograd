@@ -1,3 +1,7 @@
+"""Tests the `Value` class."""
+
+import math
+
 from absl.testing import absltest
 from absl.testing import parameterized
 
@@ -175,6 +179,13 @@ class ValueTest(parameterized.TestCase):
         neg_v = -v
         self.assertIsInstance(neg_v, Value)
         self.assertAlmostEqual(neg_v.data, -v.data)  # type: ignore
+
+    def test_exp_success(self) -> None:
+        """Tests that exponentiating the value works."""
+        v = Value(1.0)
+        result = v.exp()
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result, math.e) # type: ignore
 
     @parameterized.named_parameters(
         ("all_values_true", Value(1.0), Value(1.0), True),
