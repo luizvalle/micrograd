@@ -71,6 +71,9 @@ class Value:
     def __neg__(self) -> Value:
         return Value(self.data) * -1
 
+    def __abs__(self) -> Value:
+        return Value(abs(self.data))
+
     def __sub__(self, other: Value | int | float) -> Value:
         return self + (-other)
 
@@ -84,6 +87,11 @@ class Value:
     def relu(self) -> Value:
         """Calculates the ReLU of this value."""
         return Value(0 if self <= 0 else self.data)
+
+    def tanh(self) -> Value:
+        """Applies tanh to this value."""
+        c = (2 * self).exp()
+        return (c - 1) / (c + 1)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Value):

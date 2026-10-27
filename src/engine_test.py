@@ -205,6 +205,17 @@ class ValueTest(parameterized.TestCase):
         self.assertAlmostEqual(result, expected) # type: ignore
 
     @parameterized.named_parameters(
+        ("positive", Value(1.0), math.tanh(1.0)),
+        ("zero", Value(0), math.tanh(0.0)),
+        ("negative", Value(-2.0), math.tanh(-2.0)),
+    )
+    def test_tanh_success(self, value: Value, expected: float) -> None:
+        """Tests that applying tanh to the value works."""
+        result = value.tanh()
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result, expected) # type: ignore
+
+    @parameterized.named_parameters(
         ("all_values_true", Value(1.0), Value(1.0), True),
         ("all_values_false", Value(1.0), Value(2.0), False),
         ("value_and_int_true", Value(1.0), 1, True),
