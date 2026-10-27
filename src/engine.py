@@ -12,11 +12,11 @@ class Value:
         data: The scalar value held by this object.
     """
 
-    def __init__(self, data: int | float) -> None:
-        if isinstance(data, bool) or not isinstance(data, (int, float)):
-            raise ValueError("Expected data to be `int` or `float` but got"
-                             f"{type(data).__name__}")
-        self._data: float = float(data)
+    def __init__(self, value: Value | int | float) -> None:
+        if isinstance(value, bool) or not isinstance(value, (Value, int, float)):
+            raise ValueError("Expected `value` to be `int` or `float` but got"
+                             f" {type(value).__name__}")
+        self._data: float = value.data if isinstance(value, Value) else float(value)
 
     @property
     def data(self) -> float:
@@ -80,6 +80,10 @@ class Value:
     def exp(self) -> Value:
         """Raises `e` to this value."""
         return Value(math.exp(self.data))
+
+    def relu(self) -> Value:
+        """Calculates the ReLU of this value."""
+        return Value(0 if self <= 0 else self.data)
 
     def __eq__(self, other) -> bool:
         if isinstance(other, Value):

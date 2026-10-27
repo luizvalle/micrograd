@@ -17,18 +17,19 @@ class ValueTest(parameterized.TestCase):
         ("zero_integer", 0),
         ("positive_float", 1.0),
         ("negative_float", -2.0),
+        ("value", Value(1.0))
     )
-    def test_initialization_success(self, data: int | float) -> None:
+    def test_initialization_success(self, value: Value | int | float) -> None:
         """Tests that initializing `Value` succeeds."""
-        v = Value(data)
-        self.assertEqual(v.data, data)
+        v = Value(value)
+        self.assertEqual(v, value)
         self.assertIsInstance(v.data, float)
 
     @parameterized.named_parameters(("string", "1"), ("boolean", False))
     def test_initialization_invalid_data_failure(self, data) -> None:
         """Tests that initializing `Value` with invalid data raises an error."""
         with self.assertRaisesRegex(
-            ValueError, r"Expected data to be `int` or `float`"
+            ValueError, r"Expected `value` to be `int` or `float`"
         ):
             Value(data)
 
@@ -48,7 +49,7 @@ class ValueTest(parameterized.TestCase):
         """Tests that adding `Value`s and scalars works."""
         result = left + right
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result.data, expected)  # type: ignore
+        self.assertAlmostEqual(result, expected)  # type: ignore
 
     @parameterized.named_parameters(
         ("string_right", Value(1.0), "a"), ("string_left", "a", Value(1.0))
@@ -79,7 +80,7 @@ class ValueTest(parameterized.TestCase):
         """Tests that multiplying `Value`s and scalars works."""
         result = left * right
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result.data, expected)  # type: ignore
+        self.assertAlmostEqual(result, expected)  # type: ignore
 
     @parameterized.named_parameters(
         ("string_right", Value(1.0), "a"), ("string_left", "a", Value(1.0))
@@ -107,7 +108,7 @@ class ValueTest(parameterized.TestCase):
         """Tests that raising `Value`s to a power works."""
         result = base ** power
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result.data, expected)  # type: ignore
+        self.assertAlmostEqual(result, expected)  # type: ignore
 
     @parameterized.named_parameters(
         ("value_and_string", Value(1.0), "a"),
@@ -139,7 +140,7 @@ class ValueTest(parameterized.TestCase):
         """Tests that adding `Value`s and scalars works."""
         result = left - right
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result.data, expected)  # type: ignore   
+        self.assertAlmostEqual(result, expected)  # type: ignore   
 
     @parameterized.named_parameters(
         ("value", Value(6.0), Value(2.0), 3.0),
@@ -155,7 +156,7 @@ class ValueTest(parameterized.TestCase):
         """Tests that dividing `Value`s by `Value`s and scalars works."""
         result = left / right
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result.data, expected)  # type: ignore
+        self.assertAlmostEqual(result, expected)  # type: ignore
 
     @parameterized.named_parameters(
         ("value", Value(6.0), Value(2.0), 3.0),
@@ -171,7 +172,7 @@ class ValueTest(parameterized.TestCase):
         """Tests reflected division of `Value`s and scalars by a `Value`."""
         result = left / right
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result.data, expected)  # type: ignore
+        self.assertAlmostEqual(result, expected)  # type: ignore
 
     def test_neg_success(self) -> None:
         """Tests that negating `Value`s works."""
@@ -180,12 +181,28 @@ class ValueTest(parameterized.TestCase):
         self.assertIsInstance(neg_v, Value)
         self.assertAlmostEqual(neg_v.data, -v.data)  # type: ignore
 
-    def test_exp_success(self) -> None:
+    
+    @parameterized.named_parameters(
+        ("positive", Value(1.0), math.e),
+        ("zero", Value(0), 1.0),
+        ("negative", Value(-2.0), math.e ** -2),
+    )
+    def test_exp_success(self, value: Value, expected: float) -> None:
         """Tests that exponentiating the value works."""
-        v = Value(1.0)
-        result = v.exp()
+        result = value.exp()
         self.assertIsInstance(result, Value)
-        self.assertAlmostEqual(result, math.e) # type: ignore
+        self.assertAlmostEqual(result, expected) # type: ignore
+
+    @parameterized.named_parameters(
+        ("positive", Value(1.0), 1.0),
+        ("zero", Value(0), 0.0),
+        ("negative", Value(-2.0), 0.0),
+    )
+    def test_relu_success(self, value: Value, expected: float) -> None:
+        """Tests that applying relu to the value works."""
+        result = value.relu()
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result, expected) # type: ignore
 
     @parameterized.named_parameters(
         ("all_values_true", Value(1.0), Value(1.0), True),
