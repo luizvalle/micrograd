@@ -8,3 +8,7 @@ dependencies = [
     "absl-py>=2.5.1",
     "graphviz>=0.21",
 ]
+
+[[tool.mypy.overrides]]
+module = ["graphviz", "graphviz.*"]
+ignore_missing_imports = true
