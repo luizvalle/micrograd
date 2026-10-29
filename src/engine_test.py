@@ -36,7 +36,7 @@ class ValueTest(parameterized.TestCase):
 
     def test_initialization_with_op(self) -> None:
         """Tests initialization with the optional operation."""
-        a = Value(0.0, op="+")
+        a = Value(0.0, op="+", parents=(Value(1), Value(2)))
         self.assertEqual(a.op, "+")
 
     @parameterized.named_parameters(("string", "1"), ("boolean", False))
@@ -46,6 +46,19 @@ class ValueTest(parameterized.TestCase):
             ValueError, r"Expected `value` to be `int` or `float`"
         ):
             Value(data)
+
+    @parameterized.named_parameters(
+        ("missing_op", "", (Value(1), Value(2))),
+        ("missing_parents", "+", tuple())
+    )
+    def test_initialization_fails_with_wrong_op_and_parents(self,
+                                                            op: str,
+                                                            parents: tuple[Value]) -> None:
+        """Tests that initializating `Value` when one of `op` or `parents` is empty fails."""
+        with self.assertRaisesRegex(ValueError,
+                                    ("Either both `op` and `parents` should be "
+                                     "specified or none.")):
+            _ = Value(1, op=op, parents=parents)
 
     @parameterized.named_parameters(
         ("all_values", Value(1.0), Value(2.0), 3.0),
@@ -71,7 +84,7 @@ class ValueTest(parameterized.TestCase):
         b = Value(2.0, label="b")
         result = a + b
         self.assertEqual(result.op, "+")
-        self.assertEqual(result.label, "a + b")
+        self.assertEqual(result.label, "")
         self.assertLen(result.parents, 2)
         self.assertIs(result.parents[0], a)
         self.assertIs(result.parents[1], b)
@@ -82,13 +95,13 @@ class ValueTest(parameterized.TestCase):
         a = Value(1.0, label="a")
         result = 2 + a if reflected else a + 2
         self.assertEqual(result.op, "+")
-        self.assertEqual(result.label, "a + 2")
+        self.assertEqual(result.label, "")
         self.assertLen(result.parents, 2)
         self.assertIs(result.parents[0], a)
         constant = result.parents[1]
         self.assertIsInstance(constant, Value)
         self.assertEqual(constant.data, 2.0)
-        self.assertEqual(constant.label, "2")
+        self.assertEqual(constant.label, "")
 
     @parameterized.named_parameters(
         ("string_right", Value(1.0), "a"), ("string_left", "a", Value(1.0))
@@ -124,7 +137,7 @@ class ValueTest(parameterized.TestCase):
         b = Value(2.0, label="b")
         result = a * b
         self.assertEqual(result.op, "*")
-        self.assertEqual(result.label, "a * b")
+        self.assertEqual(result.label, "")
         self.assertLen(result.parents, 2)
         self.assertIs(result.parents[0], a)
         self.assertIs(result.parents[1], b)
@@ -135,13 +148,13 @@ class ValueTest(parameterized.TestCase):
         a = Value(1.0, label="a")
         result = 2 * a if reflected else a * 2
         self.assertEqual(result.op, "*")
-        self.assertEqual(result.label, "a * 2")
+        self.assertEqual(result.label, "")
         self.assertLen(result.parents, 2)
         self.assertIs(result.parents[0], a)
         constant = result.parents[1]
         self.assertIsInstance(constant, Value)
         self.assertEqual(constant.data, 2.0)
-        self.assertEqual(constant.label, "2")
+        self.assertEqual(constant.label, "")
 
     @parameterized.named_parameters(
         ("string_right", Value(1.0), "a"), ("string_left", "a", Value(1.0))
@@ -173,13 +186,13 @@ class ValueTest(parameterized.TestCase):
         a = Value(2.0, label="a")
         result = a ** 3
         self.assertEqual(result.op, "**")
-        self.assertEqual(result.label, "a^3")
+        self.assertEqual(result.label, "")
         self.assertLen(result.parents, 2)
         self.assertIs(result.parents[0], a)
         exponent = result.parents[1]
         self.assertIsInstance(exponent, Value)
         self.assertEqual(exponent.data, 3.0)
-        self.assertEqual(exponent.label, "3")
+        self.assertEqual(exponent.label, "")
 
     @parameterized.named_parameters(
         ("value_and_string", Value(1.0), "a"),
@@ -294,16 +307,16 @@ class ValueTest(parameterized.TestCase):
         self.assertAlmostEqual(result.data, expected)
 
     @parameterized.named_parameters(
-        ("exp", lambda v: v.exp(), "exp", "exp(a)"),
-        ("relu", lambda v: v.relu(), "relu", "relu(a)"),
-        ("abs", abs, "abs", "|a|"),
+        ("exp", lambda v: v.exp(), "exp"),
+        ("relu", lambda v: v.relu(), "relu"),
+        ("abs", abs, "abs"),
     )
-    def test_unary_builds_graph(self, fn, op: str, label: str) -> None:
+    def test_unary_builds_graph(self, fn, op: str) -> None:
         """Tests that unary operations record the input as the only parent."""
         a = Value(1.0, label="a")
         result = fn(a)
         self.assertEqual(result.op, op)
-        self.assertEqual(result.label, label)
+        self.assertEqual(result.label, "")
         self.assertLen(result.parents, 1)
         self.assertIs(result.parents[0], a)
 

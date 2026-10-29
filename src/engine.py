@@ -27,21 +27,20 @@ class Value:
                                                      (Value, int, float)):
             raise ValueError("Expected `value` to be `int` or `float` but got"
                              f" {type(value).__name__}")
+        parents = tuple(parents)
+        if bool(op) != bool(parents):
+            raise ValueError("Either both `op` and `parents` should be "
+                             "specified or none.")
         self._data: float = (value.data
                              if isinstance(value, Value) else float(value))
-        self._label: str = label
+        self.label: str = label
         self._op: str = op
-        self._parents: tuple[Value, ...] = tuple(parents)
+        self._parents: tuple[Value, ...] = parents
 
     @property
     def data(self) -> float:
         """Returns the data held by this instance."""
         return self._data
-
-    @property
-    def label(self) -> str:
-        """Returns the label."""
-        return self._label
 
     @property
     def op(self) -> str:
@@ -59,17 +58,15 @@ class Value:
     def __add__(self, other: Value | int | float) -> Value:
         if isinstance(other, Value):
             data = self.data + other.data
-            label = f"{self.label} + {other.label}"
             parents = (self, other)
         elif isinstance(other, (int, float)):
             data = self.data + other
-            other_v = Value(other, label=str(other))
-            label = f"{self.label} + {other_v.label}"
+            other_v = Value(other)
             parents = (self, other_v)
         else:
             return NotImplemented
 
-        return Value(data, label=label, op="+", parents=parents)
+        return Value(data, op="+", parents=parents)
 
     def __radd__(self, other: Value | int | float) -> Value:
         return self.__add__(other)
@@ -77,17 +74,15 @@ class Value:
     def __mul__(self, other: Value | int | float) -> Value:
         if isinstance(other, Value):
             data = self.data * other.data
-            label = f"{self.label} * {other.label}"
             parents = (self, other)
         elif isinstance(other, (int, float)):
             data = self.data * other
-            other_v = Value(other, label=str(other))
-            label = f"{self.label} * {other_v.label}"
+            other_v = Value(other)
             parents = (self, other_v)
         else:
             return NotImplemented
 
-        return Value(data, label=label, op="*", parents=parents)
+        return Value(data, op="*", parents=parents)
 
     def __rmul__(self, other: Value | int | float) -> Value:
         return self.__mul__(other)
@@ -95,13 +90,12 @@ class Value:
     def __pow__(self, other: int | float) -> Value:
         if isinstance(other, (int, float)):
             data = self.data ** other
-            other_v = Value(other, label=str(other))
-            label = f"{self.label}^{other_v.label}"
+            other_v = Value(other)
             parents = (self, other_v)
         else:
             return NotImplemented
 
-        return Value(data, label=label, op="**", parents=parents)
+        return Value(data, op="**", parents=parents)
 
     def __truediv__(self, other: Value | int | float) -> Value:
         return self * (other**-1)
@@ -113,10 +107,7 @@ class Value:
         return self * -1
 
     def __abs__(self) -> Value:
-        return Value(abs(self.data),
-                     label=f"|{self.label}|",
-                     op="abs",
-                     parents=(self,))
+        return Value(abs(self.data), op="abs", parents=(self,))
 
     def __sub__(self, other: Value | int | float) -> Value:
         return self + (-other)
@@ -126,17 +117,12 @@ class Value:
 
     def exp(self) -> Value:
         """Raises `e` to this value."""
-        return Value(math.exp(self.data),
-                     label=f"exp({self.label})",
-                     op="exp",
-                     parents=(self,))
+        return Value(math.exp(self.data), op="exp", parents=(self,))
 
     def relu(self) -> Value:
         """Calculates the ReLU of this value."""
         return Value(0 if self.data <= 0 else self.data,
-                     label=f"relu({self.label})",
-                     op="relu",
-                     parents=(self,))
+                     op="relu", parents=(self,))
 
     def tanh(self) -> Value:
         """Applies tanh to this value."""
