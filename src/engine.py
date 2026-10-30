@@ -4,7 +4,35 @@ from __future__ import annotations
 
 import math
 
-from typing import Iterable
+from collections import defaultdict
+from collections.abc import Iterable, Callable
+
+
+def _get_backprop_order(root: Value) -> list[Value]:
+    num_children_from_value: dict[Value, int] = defaultdict(int)
+    visited: set[Value] = set()
+    frontier: list[Value] = [root]
+    while frontier:
+        n = frontier.pop()
+        if n in visited:
+            continue
+        for p in n.parents:
+            num_children_from_value[p] += 1
+            if p not in visited:
+                frontier.append(p)
+        visited.add(n)
+
+    out: list[Value] = []
+    frontier = [root]
+    while frontier:
+        n = frontier.pop()
+        out.append(n)
+        for p in n.parents:
+            num_children_from_value[p] -= 1
+            if num_children_from_value[p] == 0:
+                frontier.append(p)
+
+    return out
 
 
 class Value:
@@ -36,6 +64,8 @@ class Value:
         self.label: str = label
         self._op: str = op
         self._parents: tuple[Value, ...] = parents
+        self._grad = 0.0
+        self._backward: Callable[[], None] = lambda: None
 
     @property
     def data(self) -> float:
@@ -52,21 +82,38 @@ class Value:
         """Returns the parent values."""
         return self._parents
 
+    @property
+    def grad(self) -> float:
+        """Returns the gradient of this value with respect to the output."""
+        return self._grad
+
+    def zero_grad(self) -> None:
+        """Resets the gradient to 0.0."""
+        self._grad = 0.0
+
     def __repr__(self) -> str:
         return f"Value({self.data}, label={self.label}, op={self.op})"
 
     def __add__(self, other: Value | int | float) -> Value:
         if isinstance(other, Value):
             data = self.data + other.data
-            parents = (self, other)
         elif isinstance(other, (int, float)):
             data = self.data + other
-            other_v = Value(other)
-            parents = (self, other_v)
+            other = Value(other)
         else:
             return NotImplemented
+            
+        parents = (self, other)
 
-        return Value(data, op="+", parents=parents)
+        out = Value(data, op="+", parents=parents)
+
+        def _backward() -> None:
+            self._grad += out.grad
+            other._grad += out.grad
+
+        out._backward = _backward
+
+        return out
 
     def __radd__(self, other: Value | int | float) -> Value:
         return self.__add__(other)
@@ -74,15 +121,23 @@ class Value:
     def __mul__(self, other: Value | int | float) -> Value:
         if isinstance(other, Value):
             data = self.data * other.data
-            parents = (self, other)
         elif isinstance(other, (int, float)):
             data = self.data * other
-            other_v = Value(other)
-            parents = (self, other_v)
+            other = Value(other)
         else:
             return NotImplemented
+            
+        parents = (self, other)
 
-        return Value(data, op="*", parents=parents)
+        out = Value(data, op="*", parents=parents)
+
+        def _backward() -> None:
+            self._grad += out.grad * other.data
+            other._grad += out.grad * self.data
+
+        out._backward = _backward
+
+        return out
 
     def __rmul__(self, other: Value | int | float) -> Value:
         return self.__mul__(other)
@@ -90,12 +145,18 @@ class Value:
     def __pow__(self, other: int | float) -> Value:
         if isinstance(other, (int, float)):
             data = self.data ** other
-            other_v = Value(other)
-            parents = (self, other_v)
         else:
             return NotImplemented
 
-        return Value(data, op="**", parents=parents)
+        parents = (self,)
+        out = Value(data, op=f"**{other}", parents=parents)
+
+        def _backward() -> None:
+            self._grad += out.grad * other * (self.data ** (other - 1))
+
+        out._backward = _backward
+
+        return out
 
     def __truediv__(self, other: Value | int | float) -> Value:
         return self * (other**-1)
@@ -107,7 +168,15 @@ class Value:
         return self * -1
 
     def __abs__(self) -> Value:
-        return Value(abs(self.data), op="abs", parents=(self,))
+        out = Value(abs(self.data), op="abs", parents=(self,))
+
+        def _backward() -> None:
+            c = 0.0 if self.data == 0 else (1 if self.data > 0 else -1)
+            self._grad += c * out.grad
+
+        out._backward = _backward
+
+        return out
 
     def __sub__(self, other: Value | int | float) -> Value:
         return self + (-other)
@@ -117,14 +186,35 @@ class Value:
 
     def exp(self) -> Value:
         """Raises `e` to this value."""
-        return Value(math.exp(self.data), op="exp", parents=(self,))
+        out =  Value(math.exp(self.data), op="exp", parents=(self,))
+
+        def _backward() -> None:
+            self._grad += out.grad * math.exp(self.data)
+
+        out._backward = _backward
+
+        return out
 
     def relu(self) -> Value:
         """Calculates the ReLU of this value."""
-        return Value(0 if self.data <= 0 else self.data,
+        out = Value(0 if self.data <= 0 else self.data,
                      op="relu", parents=(self,))
+
+        def _backward() -> None:
+            self._grad += out.grad * bool(self.data > 0)
+
+        out._backward = _backward
+
+        return out
 
     def tanh(self) -> Value:
         """Applies tanh to this value."""
         c = (2 * self).exp()
         return (c - 1) / (c + 1)
+
+    def backward(self) -> None:
+        """Runs backpropagation with this node as the output."""
+        self._grad = 1.0
+        for n in _get_backprop_order(self):
+            n._backward()
+

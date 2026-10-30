@@ -4,6 +4,7 @@ import math
 
 from absl.testing import absltest
 from absl.testing import parameterized
+from collections.abc import Callable
 
 from engine import Value
 
@@ -182,17 +183,13 @@ class ValueTest(parameterized.TestCase):
         self.assertAlmostEqual(result.data, expected)
 
     def test_pow_builds_graph(self) -> None:
-        """Tests that raising to a power wraps the exponent in a `Value` parent."""
+        """Tests that raising to a power records only the base as a parent."""
         a = Value(2.0, label="a")
         result = a ** 3
-        self.assertEqual(result.op, "**")
+        self.assertEqual(result.op, "**3")
         self.assertEqual(result.label, "")
-        self.assertLen(result.parents, 2)
+        self.assertLen(result.parents, 1)
         self.assertIs(result.parents[0], a)
-        exponent = result.parents[1]
-        self.assertIsInstance(exponent, Value)
-        self.assertEqual(exponent.data, 3.0)
-        self.assertEqual(exponent.label, "")
 
     @parameterized.named_parameters(
         ("value_and_string", Value(1.0), "a"),
@@ -319,6 +316,58 @@ class ValueTest(parameterized.TestCase):
         self.assertEqual(result.label, "")
         self.assertLen(result.parents, 1)
         self.assertIs(result.parents[0], a)
+
+    @parameterized.named_parameters(
+        ("add", lambda a, b: a + b, (2.0, -3.0)),
+        ("radd", lambda a: 1 + a, (2.0,)),
+        ("mul", lambda a, b: a * b, (2.0, -3.0)),
+        ("rmul", lambda a: 3 * a, (2.0,)),
+        ("pow", lambda a: a ** 3, (2.0,)),
+        ("pow_negative_base", lambda a: a ** 2, (-3.0,)),
+        ("pow_negative_exponent", lambda a: a ** -1, (-2.0,)),
+        ("pow_fractional_exponent", lambda a: a ** 0.5, (4.0,)),
+        ("truediv", lambda a, b: a / b, (8.0, -2.0)),
+        ("rtruediv", lambda a: 1 / a, (2.0,)),
+        ("sub", lambda a, b: a - b, (2.0, -3.0)),
+        ("rsub", lambda a: 5 - a, (2.0,)),
+        ("neg", lambda a: -a, (2.0,)),
+        ("abs_positive", abs, (2.0,)),
+        ("abs_negative", abs, (-2.0,)),
+        ("exp", lambda a: a.exp(), (0.5,)),
+        ("relu_positive", lambda a: a.relu(), (2.0,)),
+        ("relu_negative", lambda a: a.relu(), (-2.0,)),
+        ("tanh", lambda a: a.tanh(), (0.5,)),
+        ("same_value_twice", lambda a: a * a, (3.0,)),
+        ("shared_value", lambda a: (a + a) * 3, (2.0,)),
+        ("shared_intermediate", lambda a, b: (t := a * b) + t, (2.0, -3.0)),
+        ("composite", lambda a, b: (a * b + a.exp()).tanh() / b, (0.3, -0.7)),
+    )
+    def test_backward_matches_numerical_gradient(
+        self, f: Callable[..., Value], inputs: tuple[float, ...]
+    ) -> None:
+        """Tests that `backward` matches a central finite-difference gradient."""
+        h = 1e-6
+        values = [Value(x) for x in inputs]
+        f(*values).backward()
+        for i, v in enumerate(values):
+            up = list(inputs)
+            up[i] += h
+            down = list(inputs)
+            down[i] -= h
+            expected = (f(*map(Value, up)).data
+                        - f(*map(Value, down)).data) / (2 * h)
+            with self.subTest(input=i):
+                self.assertAlmostEqual(v.grad, expected, delta=1e-4)
+
+    @parameterized.named_parameters(
+        ("abs", abs),
+        ("relu", lambda v: v.relu()),
+    )
+    def test_backward_at_zero(self, fn) -> None:
+        """Tests that the gradient at the non-differentiable point 0 is 0."""
+        a = Value(0.0)
+        fn(a).backward()
+        self.assertEqual(a.grad, 0.0)
 
 
 if __name__ == "__main__":
