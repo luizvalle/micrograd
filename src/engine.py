@@ -59,18 +59,13 @@ class Value:
         if bool(op) != bool(parents):
             raise ValueError("Either both `op` and `parents` should be "
                              "specified or none.")
-        self._data: float = (value.data
-                             if isinstance(value, Value) else float(value))
+        self.data: float = (value.data
+                            if isinstance(value, Value) else float(value))
         self.label: str = label
         self._op: str = op
         self._parents: tuple[Value, ...] = parents
         self._grad = 0.0
         self._backward: Callable[[], None] = lambda: None
-
-    @property
-    def data(self) -> float:
-        """Returns the data held by this instance."""
-        return self._data
 
     @property
     def op(self) -> str:
