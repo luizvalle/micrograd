@@ -302,11 +302,33 @@ class ValueTest(parameterized.TestCase):
         result = value.tanh()
         self.assertIsInstance(result, Value)
         self.assertAlmostEqual(result.data, expected)
+    
+    @parameterized.named_parameters(
+        ("e", Value(math.e), 1.0),
+        ("2", Value(2), math.log(2.0)),
+        ("1", Value(1), 0.0),
+        ("fraction", Value(0.5), math.log(0.5)),
+    )
+    def test_log_success(self, value: Value, expected: float) -> None:
+        """Tests that applying the natural log to the value works."""
+        result = value.log()
+        self.assertIsInstance(result, Value)
+        self.assertAlmostEqual(result.data, expected)
+
+    @parameterized.named_parameters(
+        ("zero", 0.0),
+        ("negative", -1.0),
+    )
+    def test_log_invalid_domain(self, value: float) -> None:
+        """Tests that nonpositive inputs raise a domain error."""
+        with self.assertRaisesRegex(ValueError, "math domain error"):
+            Value(value).log()
 
     @parameterized.named_parameters(
         ("exp", lambda v: v.exp(), "exp"),
         ("relu", lambda v: v.relu(), "relu"),
         ("abs", abs, "abs"),
+        ("log", lambda v: v.log(), "log"),
     )
     def test_unary_builds_graph(self, fn, op: str) -> None:
         """Tests that unary operations record the input as the only parent."""
@@ -337,6 +359,8 @@ class ValueTest(parameterized.TestCase):
         ("relu_positive", lambda a: a.relu(), (2.0,)),
         ("relu_negative", lambda a: a.relu(), (-2.0,)),
         ("tanh", lambda a: a.tanh(), (0.5,)),
+        ("log", lambda a: a.log(), (5.0,)),
+        ("log_scaled", lambda a: 3 * a.log(), (2.0,)),
         ("same_value_twice", lambda a: a * a, (3.0,)),
         ("shared_value", lambda a: (a + a) * 3, (2.0,)),
         ("shared_intermediate", lambda a, b: (t := a * b) + t, (2.0, -3.0)),

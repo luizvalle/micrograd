@@ -207,6 +207,17 @@ class Value:
         c = (2 * self).exp()
         return (c - 1) / (c + 1)
 
+    def log(self) -> Value:
+        """Applies the natural log to this value."""
+        out = Value(math.log(self.data), op="log", parents=(self,))
+
+        def _backward() -> None:
+            self._grad += out.grad / self.data
+
+        out._backward = _backward
+
+        return out
+
     def backward(self) -> None:
         """Runs backpropagation with this node as the output."""
         self._grad = 1.0
